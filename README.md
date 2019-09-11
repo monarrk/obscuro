@@ -1,5 +1,5 @@
 # Obscuro
-"Obscuro - Algo que es confuso o difícil de entendr"
+"Obscuro - Algo que es confuso o difícil de entener"
 
 A WIP kernel.
 
