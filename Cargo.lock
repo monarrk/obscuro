@@ -72,6 +72,7 @@ dependencies = [
  "spin 0.4.10 (registry+https://github.com/rust-lang/crates.io-index)",
  "uart_16550 0.2.0 (registry+https://github.com/rust-lang/crates.io-index)",
  "volatile 0.2.6 (registry+https://github.com/rust-lang/crates.io-index)",
+ "x86_64 0.7.5 (registry+https://github.com/rust-lang/crates.io-index)",
 ]
 
 [[package]]
