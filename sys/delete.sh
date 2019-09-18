@@ -3,3 +3,4 @@ rm -rf target
 
 rm log.txt
 rm *.iso
+rm *.json

@@ -11,13 +11,15 @@ use core::panic::PanicInfo;
 fn panic(_info: &PanicInfo) -> ! {
     serial_println!("KERNEL PANIC!: {}", _info);
     println!("KERNEL PANIC!: {}", _info);
-    loop {}
+    obscuro::hlt_loop();
 }
 
 #[no_mangle]
 pub extern "C" fn _start() -> ! {
     serial_println!("\nStarting obscuro...");
     println!("Running Obscuro v0.0.1\n\nWelcome!");
-    
-    loop {}
+    obscuro::init();
+
+    println!("It didn't crash (yet)! Isn't Monarrk such a smarty pants?");
+    obscuro::hlt_loop();
 }
