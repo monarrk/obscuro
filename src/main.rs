@@ -21,5 +21,6 @@ pub extern "C" fn _start() -> ! {
     obscuro::init();
 
     println!("It didn't crash (yet)! Isn't Monarrk such a smarty pants?");
+    print!("\n\n$> ");
     obscuro::hlt_loop();
 }
