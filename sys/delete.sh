@@ -1,6 +1,6 @@
 rm -rf iso
 rm -rf target
 
-rm log.txt
-rm *.iso
-rm *.json
+rm -f log.txt
+rm -f *.json
+rm -f *.bin

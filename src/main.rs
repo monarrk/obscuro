@@ -1,8 +1,10 @@
 #![no_std] // don't link the Rust standard library
 #![no_main] // disable all Rust-level entry points
+#![feature(asm)]
 
 mod terminal;
 mod serial;
+mod io;
 
 use core::panic::PanicInfo;
 
