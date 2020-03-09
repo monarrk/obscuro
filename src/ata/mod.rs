@@ -3,7 +3,7 @@ pub mod blockdevice;
 use obscuro::io::In;
 use blockdevice::BlockDevice;
 
-fn wait400NS(port: u16) {
+fn wait400_ns(port: u16) {
     unsafe {
         u8::io_in(port);
     }
