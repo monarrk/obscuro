@@ -61,10 +61,13 @@ extern "x86-interrupt" fn double_fault_handler(
     panic!("EXCEPTION: DOUBLE FAULT!\n{:#?}", stack_frame);
 }
 
+
+pub static mut TICKS: usize = 0;
 extern "x86-interrupt" fn timer_interrupt_handler(
     _stack_frame: &mut InterruptStackFrame) {
 
     unsafe { // send end of interrupt
+        TICKS += 1;
         PICS.lock()
             .notify_end_of_interrupt(InterruptIndex::Timer.as_u8());
     };

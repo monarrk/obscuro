@@ -1,5 +1,5 @@
 pub trait Out {
-    unsafe fn io_out(self, port: u16, value: Self);
+    unsafe fn io_out(port: u16, value: Self);
 }
 
 pub trait In {
@@ -7,19 +7,19 @@ pub trait In {
 }
 
 impl Out for u8 {
-    unsafe fn io_out(self, port: u16, value: u8) {
+    unsafe fn io_out(port: u16, value: u8) {
         asm!("outb %al, %dx" : : "{al}a" (value), "{dx}Nd" (port));
     }
 }
 
 impl Out for u16 {
-    unsafe fn io_out(self, port: u16, value: u16) {
+    unsafe fn io_out(port: u16, value: u16) {
         asm!("outw %ax, %dx" : : "{dx}" (port), "{ax}" (value));
     }
 }
 
 impl Out for u32 {
-    unsafe fn io_out(self, port: u16, value: u32) {
+    unsafe fn io_out(port: u16, value: u32) {
         asm!("outl %eax, %dx" : : "{dx}" (port), "{eax}" (value));
     }
 }
