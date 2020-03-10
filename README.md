@@ -10,7 +10,6 @@ This kernel, especially in the beginning, uses an extremely large amount of code
 Dependancies:
  - Cargo xbuild
  - Cargo bootimage
- - Grub2 (grub-mkrescue)
  - Qemu?
 
 To build, use `sys/x.sh` (if you want to reverse this, you can use `sys/delete.sh`).

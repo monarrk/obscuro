@@ -2,7 +2,7 @@ pub mod blockdevice;
 
 use obscuro::io::{In, Out};
 use obscuro::interrupts::TICKS;
-use blockdevice::BlockDevice;
+use blockdevice::{BlockDevice, Icon};
 
 fn wait400_ns(port: u16) {
     unsafe {
@@ -11,7 +11,8 @@ fn wait400_ns(port: u16) {
 }
 
 #[repr(packed)]
-struct Status {
+#[derive(Copy, Clone)]
+pub struct Status {
     /// Indicates an error occurred. Send a new command to clear it (or nuke it with a Software Reset).
     has_error: bool,
 
@@ -52,6 +53,7 @@ impl Status {
     }
 }
 
+#[derive(Copy, Clone)]
 pub struct Ports {
     data: u16,
     error: u16,
@@ -65,6 +67,7 @@ pub struct Ports {
     control: u16,
 }
 
+#[derive(Copy, Clone)]
 pub struct Device {
     device: BlockDevice,
     block_size: usize,
@@ -98,6 +101,19 @@ impl Device {
             }
         }
         Ok(())
+    }
+
+    pub unsafe fn setup_parameters(&mut self, lba: u32, blockcount: u8) {
+        if self.is_master {
+            u8::io_out(self.ports.dev_select, 0xE0);
+        } else {
+            u8::io_out(self.ports.dev_select, 0xF0);
+        }
+
+        u8::io_out(self.ports.sectors, blockcount);
+        u8::io_out(self.ports.lba_low, lba as u8);
+        u8::io_out(self.ports.lba_mid, (lba >> 8) as u8);
+        u8::io_out(self.ports.lba_high, (lba >> 16) as u8);
     }
 
     pub unsafe fn init(&mut self) -> bool {
@@ -163,4 +179,65 @@ impl Device {
 
         true
     }
+}
+
+struct PortConfig {
+    port: u16,
+    is_master: bool,
+}
+
+static mut devs: [Option<Device>; 8] = [None; 8];
+static mut blockdevs: [Option<BlockDevice>; 8] = [None; 8];
+
+pub unsafe fn init() -> Result<&'static [Option<BlockDevice>], ()> {
+    let baseports: [PortConfig; 8] = [
+        PortConfig { port: 0x1F0, is_master: true },
+        PortConfig { port: 0x1F0, is_master: false },
+        PortConfig { port: 0x170, is_master: true },
+        PortConfig { port: 0x170, is_master: false },
+        PortConfig { port: 0x1E8, is_master: true },
+        PortConfig { port: 0x1E8, is_master: false },
+        PortConfig { port: 0x168, is_master: true },
+        PortConfig { port: 0x168, is_master: false },
+    ];
+
+    let mut dev_count: usize = 0;
+    for i in 0..baseports.len() {
+        let baseport = &devs[i].unwrap().base_port;
+        devs[i] = Some(Device {
+            device: BlockDevice {
+                icon: Icon::HDD,
+            },
+            block_size: 512,
+            base_port: baseports[i].port,
+            is_master: baseports[i].is_master,
+            ports: Ports {
+                data: baseport + 0,
+                error: baseport + 1,
+                sectors: baseport + 2,
+                lba_low: baseport + 3,
+                lba_mid: baseport + 4,
+                lba_high: baseport + 5,
+                dev_select: baseport + 6,
+                status: baseport + 7,
+                cmd: baseport + 7,
+                control: baseport + 518,
+            },
+            sector_count: 0,
+            present: false,
+        });
+
+        let mut dev = &mut devs[i].unwrap();
+
+        dev.present = dev.init();
+
+        if dev.present {
+            blockdevs[dev_count] = Some(dev.device);
+            dev_count += 1;
+        }
+    }
+
+    let list: &'static [Option<BlockDevice>] = &blockdevs[..dev_count];
+
+    return Ok(list);
 }

@@ -1,12 +1,9 @@
-pub trait BlockDev {
-    fn read(&mut self, start: usize, data: &[u8]) -> Result<(), &str>;
-    fn write(&mut self, start: usize, data: &[u8]) -> Result<(), &str>;
-}
-
+#[derive(Copy, Clone)]
 pub struct BlockDevice {
-    icon: Icon,
+    pub icon: Icon,
 }
 
+#[derive(Copy, Clone)]
 pub enum Icon {
     Generic,
     Floppy,

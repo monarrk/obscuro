@@ -1,0 +1,84 @@
+Making bootimage...Building kernel
+   Compiling obscuro v0.1.0 (/home/skye/rust/obscuro)
+warning: variable `w` is assigned to, but never used
+   --> src/ata/mod.rs:171:17
+    |
+171 |         for mut w in ata_data.iter() {
+    |                 ^
+    |
+    = note: `#[warn(unused_variables)]` on by default
+    = note: consider using `_w` instead
+
+warning: value assigned to `w` is never read
+   --> src/ata/mod.rs:172:13
+    |
+172 |             w = &u16::io_in(self.ports.data);
+    |             ^
+    |
+    = note: `#[warn(unused_assignments)]` on by default
+    = help: maybe it is overwritten before being read?
+
+error[E0277]: the trait bound `core::option::Option<ata::Device>: core::marker::Copy` is not satisfied
+   --> src/ata/mod.rs:186:40
+    |
+186 | static mut devs: [Option<Device>; 8] = [None; 8];
+    |                                        ^^^^^^^^^ the trait `core::marker::Copy` is not implemented for `core::option::Option<ata::Device>`
+    |
+    = help: the following implementations were found:
+              <core::option::Option<T> as core::marker::Copy>
+    = note: the `Copy` trait is required because the repeated element will be copied
+    = note: this array initializer can be evaluated at compile-time, for more information, see issue https://github.com/rust-lang/rust/issues/49147
+    = help: add `#![feature(const_in_array_repeat_expressions)]` to the crate attributes to enable
+
+error[E0277]: the trait bound `core::option::Option<ata::blockdevice::BlockDevice>: core::marker::Copy` is not satisfied
+   --> src/ata/mod.rs:187:50
+    |
+187 | static mut blockdevs: [Option<BlockDevice>; 8] = [None; 8];
+    |                                                  ^^^^^^^^^ the trait `core::marker::Copy` is not implemented for `core::option::Option<ata::blockdevice::BlockDevice>`
+    |
+    = help: the following implementations were found:
+              <core::option::Option<T> as core::marker::Copy>
+    = note: the `Copy` trait is required because the repeated element will be copied
+    = note: this array initializer can be evaluated at compile-time, for more information, see issue https://github.com/rust-lang/rust/issues/49147
+    = help: add `#![feature(const_in_array_repeat_expressions)]` to the crate attributes to enable
+
+error[E0507]: cannot move out of `"devs[_]"` as `"devs"` is a static item
+   --> src/ata/mod.rs:203:24
+    |
+203 |         let baseport = devs[i].unwrap().base_port;
+    |                        ^^^^^^^ move occurs because `devs[_]` has type `core::option::Option<ata::Device>`, which does not implement the `Copy` trait
+
+error[E0507]: cannot move out of `"devs[_]"` as `"devs"` is a static item
+   --> src/ata/mod.rs:227:9
+    |
+227 |         devs[i].unwrap().present = devs[i].unwrap().init();
+    |         ^^^^^^^ move occurs because `devs[_]` has type `core::option::Option<ata::Device>`, which does not implement the `Copy` trait
+
+error[E0507]: cannot move out of `"devs[_]"` as `"devs"` is a static item
+   --> src/ata/mod.rs:227:36
+    |
+227 |         devs[i].unwrap().present = devs[i].unwrap().init();
+    |                                    ^^^^^^^ move occurs because `devs[_]` has type `core::option::Option<ata::Device>`, which does not implement the `Copy` trait
+
+error[E0507]: cannot move out of `"devs[_]"` as `"devs"` is a static item
+   --> src/ata/mod.rs:229:12
+    |
+229 |         if devs[i].unwrap().present {
+    |            ^^^^^^^ move occurs because `devs[_]` has type `core::option::Option<ata::Device>`, which does not implement the `Copy` trait
+
+error[E0507]: cannot move out of `"devs[_]"` as `"devs"` is a static item
+   --> src/ata/mod.rs:230:41
+    |
+230 |             blockdevs[dev_count] = Some(devs[i].unwrap().device);
+    |                                         ^^^^^^^ move occurs because `devs[_]` has type `core::option::Option<ata::Device>`, which does not implement the `Copy` trait
+
+error: aborting due to 7 previous errors
+
+Some errors have detailed explanations: E0277, E0507.
+For more information about an error, try `rustc --explain E0277`.
+error: could not compile `obscuro`.
+
+To learn more, run the command again with --verbose.
+Error: Kernel build failed
+
+FAILURE!
