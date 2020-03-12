@@ -8,6 +8,7 @@ pub mod terminal;
 pub mod interrupts;
 pub mod gdt;
 pub mod io;
+pub mod mem;
 
 pub fn hlt_loop() -> ! {
     loop {
@@ -21,5 +22,3 @@ pub fn init() {
     unsafe { interrupts::PICS.lock().initialize() };
     x86_64::instructions::interrupts::enable();
 }
-
-

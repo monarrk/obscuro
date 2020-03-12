@@ -20,10 +20,17 @@ fn panic(_info: &PanicInfo) -> ! {
 #[no_mangle]
 pub extern "C" fn _start() -> ! {
     serial_println!("\nStarting obscuro...");
-    println!("Running Obscuro v0.0.1\n\nWelcome!");
+    println!("Running Obscuro v0.0.3\n\nWelcome!");
     obscuro::init();
+    match unsafe { ata::init() } {
+        Ok(_) => {},
+        Err(e) => {
+            println!("Failed to init ATA driver!");
+            serial_println!("Failed to init ATA driver!");
+        }
+    };
 
-    println!("It didn't crash (yet)! Isn't Monarrk such a smarty pants?");
+    println!("It didn't crash (yet)! Ain't that neat?");
     print!("\n\n$> ");
     obscuro::hlt_loop();
 }

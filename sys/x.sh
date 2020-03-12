@@ -5,8 +5,8 @@ function fail() {
 }
 
 printf "Making bootimage..."
-cargo bootimage --target $(pwd)/sys/extras/x86_64-obscuro.json || fail
-cp target/x86_64-obscuro/debug/bootimage-obscuro.bin obscuro.bin
+cargo bootimage --target $(pwd)/sys/extras/x86_64-obscuro.json --release || fail
+cp target/x86_64-obscuro/release/bootimage-obscuro.bin ./obscuro.bin
 printf "OK\n"
 
 printf "Use sys/test.sh to test the kernel or burn obscuro.bin to a flash drive\n"

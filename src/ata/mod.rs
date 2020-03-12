@@ -1,7 +1,12 @@
 pub mod blockdevice;
 
+use core::convert::TryInto;
+
 use obscuro::io::{In, Out};
 use obscuro::interrupts::TICKS;
+use obscuro::{serial_print, serial_println, print, println};
+use obscuro::mem::is_aligned;
+
 use blockdevice::{BlockDevice, Icon};
 
 fn wait400_ns(port: u16) {
@@ -123,27 +128,37 @@ impl Device {
 
         // To use IDENTIFY command, select target drive by sending 0xA0 for the master drive, or
         // 0xB0 for the slave, to the "drive select" IO port
+        serial_print!("Sending IDENTIFY command...");
         if self.is_master {
+            serial_print!("sending 0xA0...");
             u8::io_out(self.ports.dev_select, 0xA0);
         } else {
+            serial_print!("sending 0xB0...");
             u8::io_out(self.ports.dev_select, 0xB0);
         }
+        serial_println!("OK");
 
         // Then set the Sectorcount, LBAlo, LBAmid, and LBAhi IO ports to 0
+        serial_print!("Setting sectorcount and LBAs to 0...");
         u8::io_out(self.ports.sectors, 0);
         u8::io_out(self.ports.lba_low, 0);
         u8::io_out(self.ports.lba_mid, 0);
         u8::io_out(self.ports.lba_high, 0);
+        serial_println!("OK");
 
         // Then send the IDENTIFY command (0xEC) to the Command IO port.
+        serial_print!("Sending IDENTIFY command...");
+        // TODO Double faults on QEMU...
         u8::io_out(self.ports.cmd, 0xEC);
+        serial_println!("OK");
 
         // Then read the Status port again. If the value read is 0, the drive does not exist.
+        serial_print!("Reading status port...");
         let status_byte = u8::io_in(self.ports.status);
         if status_byte == 0x00 {
             return false;
         }
-
+        serial_println!("OK");
 
         // For any other value: poll the Status port (0x1F7) until bit 7 (BSY, value =
         // 0x80)
@@ -179,6 +194,49 @@ impl Device {
 
         true
     }
+
+    pub fn read_blocks(&mut self, lba: u32, buffer: &[u8]) -> Result<(), &str> {
+        if !self.present {
+            return Err("Device not present");
+        }
+
+        if !is_aligned(buffer.len(), self.block_size) {
+            return Err("Data not aligned");
+        }
+
+        let block_count = (buffer.len() / self.block_size) as u8;
+
+        if (lba + block_count as u32) > self.sector_count.try_into().unwrap() {
+            return Err("Address is not on device");
+        }
+
+        unsafe {
+            self.setup_parameters(lba, block_count);
+            u8::io_out(self.ports.cmd, 0x20);
+        }
+
+        let mut block: usize = 0;
+        while block < block_count.try_into().unwrap() {
+            self.wait_for_err_or_ready(150).unwrap();
+            
+            let words: &[u16; 256] = &[0; 256];
+
+            unsafe {
+                for mut w in words.iter() {
+                    w = &u16::io_in(self.ports.data);
+                }
+            }
+
+            // Forgive me lord, for I have sinned
+            unsafe {
+                //core::intrinsics::copy_nonoverlapping::<u32>(core::mem::transmute::<[u16; 256], *const u32>(*words), (core::mem::transmute::<&[u8], usize>(buffer) + self.block_size * block) as *mut u32, self.block_size);
+            }
+            
+            block += 1;
+        }
+
+        Ok(())
+    }
 }
 
 struct PortConfig {
@@ -186,8 +244,8 @@ struct PortConfig {
     is_master: bool,
 }
 
-static mut devs: [Option<Device>; 8] = [None; 8];
-static mut blockdevs: [Option<BlockDevice>; 8] = [None; 8];
+static mut DEVS: [Option<Device>; 8] = [None; 8];
+static mut BLOCKDEVS: [Option<BlockDevice>; 8] = [None; 8];
 
 pub unsafe fn init() -> Result<&'static [Option<BlockDevice>], ()> {
     let baseports: [PortConfig; 8] = [
@@ -203,8 +261,9 @@ pub unsafe fn init() -> Result<&'static [Option<BlockDevice>], ()> {
 
     let mut dev_count: usize = 0;
     for i in 0..baseports.len() {
-        let baseport = &devs[i].unwrap().base_port;
-        devs[i] = Some(Device {
+        serial_println!("Initializing device {}", i);
+        let baseport = baseports[i].port;
+        DEVS[i] = Some(Device {
             device: BlockDevice {
                 icon: Icon::HDD,
             },
@@ -227,17 +286,26 @@ pub unsafe fn init() -> Result<&'static [Option<BlockDevice>], ()> {
             present: false,
         });
 
-        let mut dev = &mut devs[i].unwrap();
+        serial_print!("Unwrapping device...");
+        let mut dev = &mut DEVS[i].unwrap();
+        serial_println!("OK");
 
+        serial_print!("Initing device...");
         dev.present = dev.init();
+        serial_println!("OK");
 
         if dev.present {
-            blockdevs[dev_count] = Some(dev.device);
+            serial_println!("Found device");
+            BLOCKDEVS[dev_count] = Some(dev.device);
             dev_count += 1;
+        } else {
+            serial_println!("No device present");
         }
     }
+    serial_println!("Finished initializing {} devices", dev_count);
+    println!("Initialized {} devices", dev_count);
 
-    let list: &'static [Option<BlockDevice>] = &blockdevs[..dev_count];
+    let list: &'static [Option<BlockDevice>] = &BLOCKDEVS[..dev_count];
 
     return Ok(list);
 }
