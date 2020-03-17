@@ -1,5 +1,5 @@
-#!/bin/bash
-function fail() {
+#!/bin/sh
+fail() {
 	printf "FAILURE!\n"
 	exit 1
 }
