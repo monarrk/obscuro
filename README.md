@@ -1,3 +1,6 @@
+# IMPORTANT: NOW ON GITLAB
+[please see here](https://gitlab.com/monarrk/obscuro)
+
 # Obscuro
 "Obscuro - Algo que es confuso o difícil de entener"
 
